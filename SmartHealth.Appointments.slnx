@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmartHealth.Appointments.API/SmartHealth.Appointments.API.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartHealth.Appointments.Tests/SmartHealth.Appointments.Tests.csproj" />
+  </Folder>
+</Solution>

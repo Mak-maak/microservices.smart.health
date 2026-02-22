@@ -1,0 +1,142 @@
+# =============================================================================
+# GitHub Actions CI/CD Pipeline
+# Restore → Build → Test → Publish → Docker build → Push ACR → Deploy AKS
+# =============================================================================
+name: CI/CD – SmartHealth Appointments
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  IMAGE_NAME: smarthealth-appointments
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  AKS_RESOURCE_GROUP: ${{ secrets.AKS_RESOURCE_GROUP }}
+  AKS_CLUSTER_NAME: ${{ secrets.AKS_CLUSTER_NAME }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Restore, Build & Test
+  # ---------------------------------------------------------------------------
+  build-and-test:
+    name: Build & Test (.NET ${{ env.DOTNET_VERSION }})
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      checks: write   # Required by dorny/test-reporter
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore SmartHealth.Appointments.slnx
+
+      - name: Build
+        run: dotnet build SmartHealth.Appointments.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: |
+          dotnet test tests/SmartHealth.Appointments.Tests/SmartHealth.Appointments.Tests.csproj \
+            --no-build \
+            --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --collect:"XPlat Code Coverage"
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: xUnit Tests
+          path: "**/*.trx"
+          reporter: dotnet-trx
+
+  # ---------------------------------------------------------------------------
+  # 2. Publish & Docker build/push (only on main branch)
+  # ---------------------------------------------------------------------------
+  docker-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR Login
+        run: az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+
+  # ---------------------------------------------------------------------------
+  # 3. Deploy to AKS
+  # ---------------------------------------------------------------------------
+  deploy-aks:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: docker-push
+    environment: production
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AKS_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Deploy to AKS
+        run: |
+          kubectl set image deployment/smarthealth-appointments \
+            api=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --namespace smarthealth \
+            --record
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/smarthealth-appointments \
+            --namespace smarthealth \
+            --timeout=300s

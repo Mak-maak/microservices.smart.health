@@ -1,0 +1,29 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+
+# NuGet packages
+**/packages/
+*.nupkg
+
+# Test results
+**/*.trx
+**/TestResults/
+**/*.coverage
+**/*.coveragexml
+
+# Docker
+docker-compose.override.yml
+
+# IDE
+*.user
+.DS_Store
+Thumbs.db
+
+# Secrets (never commit)
+**/appsettings.Production.json
+**/secrets.json
+**/*.pfx
+**/*.p12
