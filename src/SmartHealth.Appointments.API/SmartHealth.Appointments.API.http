@@ -1,0 +1,6 @@
+@SmartHealth.Appointments.API_HostAddress = http://localhost:5194
+
+GET {{SmartHealth.Appointments.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
