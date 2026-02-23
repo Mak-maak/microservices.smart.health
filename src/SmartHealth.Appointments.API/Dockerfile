@@ -6,20 +6,19 @@
 
 # --- Build stage ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /source
+WORKDIR /app
 
-# Copy solution and project files first (layer caching)
-COPY SmartHealth.Appointments.slnx ./
-COPY src/SmartHealth.Appointments.API/SmartHealth.Appointments.API.csproj ./src/SmartHealth.Appointments.API/
+# Copy project file first (layer caching)
+COPY SmartHealth.Appointments.API.csproj ./
 
 # Restore dependencies
-RUN dotnet restore src/SmartHealth.Appointments.API/SmartHealth.Appointments.API.csproj
+RUN dotnet restore SmartHealth.Appointments.API.csproj
 
-# Copy source
-COPY src/SmartHealth.Appointments.API/. ./src/SmartHealth.Appointments.API/
+# Copy source code
+COPY . ./
 
 # Publish (ReadyToRun enabled in csproj)
-RUN dotnet publish src/SmartHealth.Appointments.API/SmartHealth.Appointments.API.csproj \
+RUN dotnet publish SmartHealth.Appointments.API.csproj \
     --configuration Release \
     --no-restore \
     --output /app/publish
