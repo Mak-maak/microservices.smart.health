@@ -1,0 +1,80 @@
+# =============================================================================
+# .dockerignore for SmartHealth.Appointments.API
+# Excludes unnecessary files from Docker build context
+# =============================================================================
+
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE and editor folders
+**/.vs/
+**/.vscode/
+**/.idea/
+**/.rider/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+LICENSE
+CHANGELOG.md
+docs/
+
+# Test projects
+**/*Tests/
+**/*.Tests/
+**/TestResults/
+**/*.trx
+
+# CI/CD
+.github/
+.azure-pipelines/
+azure-pipelines.yml
+.gitlab-ci.yml
+Jenkinsfile
+
+# Docker files (don't copy Docker files into the image)
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+
+# Local development
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/*.Development.json
+**/*.local.json
+
+# Logs
+**/logs/
+**/*.log
+
+# Temporary files
+**/tmp/
+**/temp/
+**/.tmp/
+
+# NuGet packages (restored during build)
+**/packages/
+**/*.nupkg
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Sensitive files
+**/*.pfx
+**/*.key
+**/*.pem
+**/secrets.json
