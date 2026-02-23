@@ -39,10 +39,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore
-        run: dotnet restore SmartHealth.Appointments.slnx
+        run: dotnet restore Microservices.Smart.Health.slnx
 
       - name: Build
-        run: dotnet build SmartHealth.Appointments.slnx --no-restore --configuration Release
+        run: dotnet build Microservices.Smart.Health.slnx --no-restore --configuration Release
 
       - name: Test
         run: |
