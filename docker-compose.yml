@@ -2,7 +2,6 @@
 # docker-compose.yml – Local development environment
 # Spins up the API + dependencies (SQL Server, Redis, Seq for logging)
 # =============================================================================
-version: "3.9"
 
 services:
   api:

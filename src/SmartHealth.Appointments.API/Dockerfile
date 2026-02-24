@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy project file first (layer caching)
 COPY SmartHealth.Appointments.API.csproj ./
 
-# Restore dependencies
-RUN dotnet restore SmartHealth.Appointments.API.csproj
+# Restore dependencies (specify linux-x64 for ReadyToRun support)
+RUN dotnet restore SmartHealth.Appointments.API.csproj -r linux-x64
 
 # Copy source code
 COPY . ./
@@ -20,6 +20,7 @@ COPY . ./
 # Publish (ReadyToRun enabled in csproj)
 RUN dotnet publish SmartHealth.Appointments.API.csproj \
     --configuration Release \
+    --runtime linux-x64 \
     --no-restore \
     --output /app/publish
 
@@ -28,15 +29,15 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 appgroup \
- && adduser  --system --uid 1001 --ingroup appgroup --no-create-home appuser
+RUN groupadd --system --gid 1001 appgroup \
+ && useradd --system --uid 1001 --gid appgroup --no-create-home appuser
 
 # Copy published artefacts
 COPY --from=build /app/publish ./
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost:8080/liveness || exit 1
+  CMD curl -f http://localhost:8080/liveness || exit 1
 
 # Drop privileges
 USER appuser
