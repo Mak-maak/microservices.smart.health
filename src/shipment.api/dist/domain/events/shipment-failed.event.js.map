@@ -1,1 +1,0 @@
-{"version":3,"file":"shipment-failed.event.js","sourceRoot":"","sources":["../../../src/domain/events/shipment-failed.event.ts"],"names":[],"mappings":";;;AAAA,MAAa,mBAAmB;IAC9B,YACkB,UAAkB,EAClB,cAAsB,EACtB,MAAc,EACd,aAAqB;QAHrB,eAAU,GAAV,UAAU,CAAQ;QAClB,mBAAc,GAAd,cAAc,CAAQ;QACtB,WAAM,GAAN,MAAM,CAAQ;QACd,kBAAa,GAAb,aAAa,CAAQ;IACpC,CAAC;CACL;AAPD,kDAOC"}

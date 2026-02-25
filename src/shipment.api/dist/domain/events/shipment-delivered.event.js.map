@@ -1,1 +1,0 @@
-{"version":3,"file":"shipment-delivered.event.js","sourceRoot":"","sources":["../../../src/domain/events/shipment-delivered.event.ts"],"names":[],"mappings":";;;AAAA,MAAa,sBAAsB;IACjC,YACkB,UAAkB,EAClB,cAAsB,EACtB,aAAqB;QAFrB,eAAU,GAAV,UAAU,CAAQ;QAClB,mBAAc,GAAd,cAAc,CAAQ;QACtB,kBAAa,GAAb,aAAa,CAAQ;IACpC,CAAC;CACL;AAND,wDAMC"}

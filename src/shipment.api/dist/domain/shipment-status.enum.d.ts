@@ -1,7 +1,0 @@
-export declare enum ShipmentStatus {
-    CREATED = "CREATED",
-    PACKED = "PACKED",
-    DISPATCHED = "DISPATCHED",
-    DELIVERED = "DELIVERED",
-    FAILED = "FAILED"
-}
