@@ -31,17 +31,18 @@ services:
 
   payments-api:
     build:
-      context: ./src/SmartHealth.Payments.API
+      context: ./src/payments.api
       dockerfile: Dockerfile
     ports:
       - "8081:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__SqlServer: "Server=sqlserver,1433;Database=SmartHealthPayments;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true"
-      Features__UseInMemoryBus: "true"
-      Stripe__SecretKey: "sk_test_placeholder"
+      PORT: "8080"
+      ENVIRONMENT: development
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/smarthealth_payments?sslmode=disable"
+      USE_IN_MEMORY_BROKER: "true"
+      STRIPE_SECRET_KEY: "sk_test_placeholder"
     depends_on:
-      sqlserver:
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
@@ -79,6 +80,24 @@ services:
       timeout: 3s
       retries: 5
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: smarthealth_payments
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
 volumes:
   sqlserver_data:
   redis_data:
+  postgres_data:
