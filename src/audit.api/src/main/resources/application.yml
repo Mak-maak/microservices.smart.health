@@ -1,0 +1,50 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: audit-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/smarthealth_audit}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-change-in-production}
+
+azure:
+  servicebus:
+    connection-string: ${AZURE_SERVICE_BUS_CONNECTION_STRING:}
+    appointments-topic: ${AZURE_SERVICE_BUS_APPOINTMENTS_TOPIC:appointments-events}
+    appointments-subscription: ${AZURE_SERVICE_BUS_APPOINTMENTS_SUBSCRIPTION:audit-subscription}
+    payments-topic: ${AZURE_SERVICE_BUS_PAYMENTS_TOPIC:payments-events}
+    payments-subscription: ${AZURE_SERVICE_BUS_PAYMENTS_SUBSCRIPTION:audit-subscription}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{correlationId}] %-5level %logger{36} - %msg%n"
+  level:
+    com.smarthealth.audit: INFO
+    org.springframework.security: WARN
