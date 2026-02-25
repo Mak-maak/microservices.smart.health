@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SmartHealth.Appointments.Domain.Entities;
+using SmartHealth.Appointments.Infrastructure.Outbox;
+using SmartHealth.Appointments.Infrastructure.EventSourcing;
+using SmartHealth.Appointments.Infrastructure.Saga;
 
 namespace SmartHealth.Appointments.Infrastructure.Persistence.Configurations;
 
@@ -61,5 +64,61 @@ internal sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appoin
 
         builder.HasOne(a => a.Doctor).WithMany()
             .HasForeignKey(a => a.DoctorId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+{
+    public void Configure(EntityTypeBuilder<OutboxMessage> builder)
+    {
+        builder.HasKey(o => o.Id);
+        builder.Property(o => o.MessageType).HasMaxLength(500).IsRequired();
+        builder.Property(o => o.Payload).IsRequired();
+        builder.Property(o => o.CorrelationId).HasMaxLength(100);
+        builder.Property(o => o.CreatedAt).IsRequired();
+        builder.Property(o => o.ProcessedAt);
+        builder.Property(o => o.RetryCount).IsRequired();
+
+        // Index for efficient querying of pending messages
+        builder.HasIndex(o => new { o.ProcessedAt, o.RetryCount, o.CreatedAt })
+            .HasDatabaseName("IX_OutboxMessages_Pending");
+    }
+}
+
+internal sealed class EventStoreEntryConfiguration : IEntityTypeConfiguration<EventStoreEntry>
+{
+    public void Configure(EntityTypeBuilder<EventStoreEntry> builder)
+    {
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.AggregateId).IsRequired();
+        builder.Property(e => e.AggregateType).HasMaxLength(500).IsRequired();
+        builder.Property(e => e.EventType).HasMaxLength(500).IsRequired();
+        builder.Property(e => e.Payload).IsRequired();
+        builder.Property(e => e.OccurredAt).IsRequired();
+        builder.Property(e => e.Version).IsRequired();
+
+        // Index for efficient event stream retrieval
+        builder.HasIndex(e => new { e.AggregateId, e.Version })
+            .HasDatabaseName("IX_EventStore_AggregateStream");
+    }
+}
+
+internal sealed class AppointmentSagaStateConfiguration : IEntityTypeConfiguration<AppointmentSagaState>
+{
+    public void Configure(EntityTypeBuilder<AppointmentSagaState> builder)
+    {
+        builder.ToTable("AppointmentSagaStates");
+
+        builder.HasKey(s => s.CorrelationId);
+        builder.Property(s => s.CurrentState).HasMaxLength(64).IsRequired();
+        builder.Property(s => s.PatientId).IsRequired();
+        builder.Property(s => s.DoctorId).IsRequired();
+        builder.Property(s => s.SlotStartTime).IsRequired();
+        builder.Property(s => s.SlotEndTime).IsRequired();
+        builder.Property(s => s.RowVersion).IsRowVersion();
+
+        // Index for efficient state queries
+        builder.HasIndex(s => s.CurrentState)
+            .HasDatabaseName("IX_SagaState_CurrentState");
     }
 }

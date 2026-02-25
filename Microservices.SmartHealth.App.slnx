@@ -1,4 +1,24 @@
 <Solution>
+  <Folder Name="/infra/">
+    <File Path="infra/apim.bicep" />
+    <File Path="infra/main.bicep" />
+  </Folder>
+  <Folder Name="/infra/modules/">
+    <File Path="infra/modules/acr.bicep" />
+    <File Path="infra/modules/containerapps.bicep" />
+    <File Path="infra/modules/keyvault.bicep" />
+    <File Path="infra/modules/monitoring.bicep" />
+    <File Path="infra/modules/redis.bicep" />
+    <File Path="infra/modules/servicebus.bicep" />
+    <File Path="infra/modules/sql.bicep" />
+  </Folder>
+  <Folder Name="/infra/scripts/">
+    <File Path="infra/scripts/deploy-stack.ps1" />
+    <File Path="infra/scripts/deploy-stack.sh" />
+    <File Path="infra/scripts/destroy-stack.ps1" />
+    <File Path="infra/scripts/README.md" />
+    <File Path="infra/scripts/validate-stack.ps1" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path="docker-compose.yml" />
   </Folder>

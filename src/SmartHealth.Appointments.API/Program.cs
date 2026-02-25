@@ -42,7 +42,7 @@ if (builder.Environment.IsProduction())
 // ----------------------------------------------------------
 // Database - Azure SQL via EF Core
 // ----------------------------------------------------------
-builder.Services.AddDbContext<AppointmentsDbContext>(options =>
+builder.Services.AddDbContext<AppointmentsDbContext>((serviceProvider, options) =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("SqlServer"),
         sql =>
@@ -67,6 +67,15 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
 // ----------------------------------------------------------
+// JSON Serialization Options (case-insensitive property matching)
+// ----------------------------------------------------------
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNameCaseInsensitive = true; // Accept any case for request JSON
+    options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase; // Use camelCase for response JSON
+});
+
+// ----------------------------------------------------------
 // MassTransit (orchestration saga + choreography consumers)
 // ----------------------------------------------------------
 var useSagaOrchestration = builder.Configuration.GetValue<bool>("Features:SagaOrchestration", true);
@@ -85,6 +94,12 @@ builder.Services.AddMassTransit(x =>
                 r.AddDbContext<DbContext, AppointmentsDbContext>((sp, o) =>
                     o.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")!));
             });
+
+        // Add consumers for saga orchestration commands
+        x.AddConsumer<SmartHealth.Appointments.Infrastructure.Saga.Consumers.ValidateDoctorAvailabilityConsumer>();
+        x.AddConsumer<SmartHealth.Appointments.Infrastructure.Saga.Consumers.ReserveSlotConsumer>();
+        x.AddConsumer<SmartHealth.Appointments.Infrastructure.Saga.Consumers.ConfirmAppointmentCommandConsumer>();
+        x.AddConsumer<SmartHealth.Appointments.Infrastructure.Saga.Consumers.CompensateAppointmentConsumer>();
     }
 
     // Choreography consumers (alternative)
@@ -167,19 +182,27 @@ if (!string.IsNullOrWhiteSpace(appInsightsConnStr))
 // ----------------------------------------------------------
 // Health checks
 // ----------------------------------------------------------
-builder.Services
-    .AddHealthChecks()
+var healthChecks = builder.Services.AddHealthChecks()
     .AddSqlServer(
         builder.Configuration.GetConnectionString("SqlServer") ?? string.Empty,
         name: "sql", tags: ["readiness"])
     .AddRedis(
         builder.Configuration.GetConnectionString("Redis") ?? string.Empty,
-        name: "redis", tags: ["readiness"])
-    .AddAzureServiceBusQueue(
-        builder.Configuration.GetConnectionString("AzureServiceBus") ?? string.Empty,
-        "appointments",
-        name: "servicebus", tags: ["readiness"],
-        configure: _ => { });
+        name: "redis", tags: ["readiness"]);
+
+// Only add Azure Service Bus health check when not using in-memory bus (i.e., in Azure)
+if (!useInMemoryBus)
+{
+    var serviceBusConnStr = builder.Configuration.GetConnectionString("AzureServiceBus");
+    if (!string.IsNullOrWhiteSpace(serviceBusConnStr))
+    {
+        healthChecks.AddAzureServiceBusQueue(
+            serviceBusConnStr,
+            "appointments",
+            name: "servicebus", tags: ["readiness"],
+            configure: _ => { });
+    }
+}
 
 // ============================================================
 // Build the application
@@ -211,7 +234,7 @@ app.MapGet("/liveness", () => Results.Ok(new { status = "alive", timestamp = Dat
 // ----------------------------------------------------------
 var appointments = app.MapGroup("/api/appointments").WithTags("Appointments");
 
-appointments.MapPost("/", async (BookAppointmentCommand command, IMediator mediator, CancellationToken ct) =>
+appointments.MapPost("/Book", async (BookAppointmentCommand command, IMediator mediator, CancellationToken ct) =>
 {
     var result = await mediator.Send(command, ct);
     return Results.Created($"/api/appointments/{result.AppointmentId}", result);
@@ -240,7 +263,7 @@ appointments.MapDelete("/{id:guid}", async (Guid id, string reason, IMediator me
 // ----------------------------------------------------------
 var patients = app.MapGroup("/api/patients").WithTags("Patients");
 
-patients.MapPost("/", async (CreatePatientCommand command, IMediator mediator, CancellationToken ct) =>
+patients.MapPost("/Create", async (CreatePatientCommand command, IMediator mediator, CancellationToken ct) =>
 {
     var id = await mediator.Send(command, ct);
     return Results.Created($"/api/patients/{id}", new { id });
@@ -259,7 +282,7 @@ patients.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationTo
 // ----------------------------------------------------------
 var doctors = app.MapGroup("/api/doctors").WithTags("Doctors");
 
-doctors.MapPost("/", async (CreateDoctorCommand command, IMediator mediator, CancellationToken ct) =>
+doctors.MapPost("/Create", async (CreateDoctorCommand command, IMediator mediator, CancellationToken ct) =>
 {
     var id = await mediator.Send(command, ct);
     return Results.Created($"/api/doctors/{id}", new { id });

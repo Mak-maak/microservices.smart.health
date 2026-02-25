@@ -13,13 +13,13 @@ public sealed record AppointmentRequestedMessage(
     DateTime EndTime);
 
 /// <summary>Published by the Doctor service when the doctor is available.</summary>
-public sealed record DoctorAvailabilityValidatedMessage(Guid AppointmentId);
+public sealed record DoctorAvailabilityValidatedMessage(Guid AppointmentId, Guid DoctorId);
 
 /// <summary>Published by the Doctor service when the doctor is NOT available.</summary>
 public sealed record DoctorUnavailableMessage(Guid AppointmentId, string Reason);
 
 /// <summary>Published when a time slot has been reserved.</summary>
-public sealed record SlotReservedMessage(Guid AppointmentId);
+public sealed record SlotReservedMessage(Guid AppointmentId, Guid DoctorId);
 
 /// <summary>Published when a time slot reservation fails.</summary>
 public sealed record SlotReservationFailedMessage(Guid AppointmentId, string Reason);
@@ -57,3 +57,7 @@ public sealed record ReserveSlotCommand(
 public sealed record ConfirmAppointmentCommand(Guid AppointmentId);
 
 public sealed record CompensateAppointmentCommand(Guid AppointmentId, string Reason);
+
+/// <summary>Published when compensation (rollback) is complete.</summary>
+public sealed record AppointmentCompensatedMessage(Guid AppointmentId, string Reason);
+

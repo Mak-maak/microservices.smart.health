@@ -16,6 +16,7 @@ namespace SmartHealth.Appointments.Infrastructure.Outbox;
 ///   – Runs on a configurable polling interval (default 5 s).
 ///   – Retries up to MaxRetries before moving to dead-letter state.
 ///   – Uses a short-lived DI scope per batch to avoid long-lived DbContexts.
+///   – Handles database not ready scenarios gracefully during startup.
 /// </summary>
 public sealed class OutboxPublisherService(
     IServiceScopeFactory scopeFactory,
@@ -23,10 +24,20 @@ public sealed class OutboxPublisherService(
 {
     private const int MaxRetries = 5;
     private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan StartupRetryDelay = TimeSpan.FromSeconds(10);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Outbox publisher started.");
+        logger.LogInformation("Outbox publisher starting...");
+
+        // Wait for database to be ready
+        if (!await WaitForDatabaseAsync(stoppingToken))
+        {
+            logger.LogWarning("Outbox publisher could not connect to database. Service stopping.");
+            return;
+        }
+
+        logger.LogInformation("Outbox publisher started successfully.");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -41,6 +52,55 @@ public sealed class OutboxPublisherService(
 
             await Task.Delay(PollingInterval, stoppingToken);
         }
+
+        logger.LogInformation("Outbox publisher stopped.");
+    }
+
+    private async Task<bool> WaitForDatabaseAsync(CancellationToken ct)
+    {
+        const int maxAttempts = 6; // Wait up to 1 minute
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppointmentsDbContext>();
+
+                // Try to connect and check if OutboxMessages table exists
+                await db.Database.CanConnectAsync(ct);
+
+                // Test query to ensure table exists
+                _ = await db.OutboxMessages.AnyAsync(ct);
+
+                logger.LogInformation("Database and OutboxMessages table are ready.");
+                return true;
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                logger.LogWarning(ex, 
+                    "Database not ready (attempt {Attempt}/{MaxAttempts}). Retrying in {Delay} seconds...",
+                    attempt, maxAttempts, StartupRetryDelay.TotalSeconds);
+
+                try
+                {
+                    await Task.Delay(StartupRetryDelay, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, 
+                    "Failed to connect to database after {MaxAttempts} attempts. " +
+                    "Ensure migrations have been applied.", maxAttempts);
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private async Task ProcessBatchAsync(CancellationToken ct)
@@ -54,6 +114,13 @@ public sealed class OutboxPublisherService(
             .OrderBy(m => m.CreatedAt)
             .Take(50)
             .ToListAsync(ct);
+
+        if (pending.Count == 0)
+        {
+            return; // No messages to process
+        }
+
+        logger.LogInformation("Processing {Count} outbox messages.", pending.Count);
 
         foreach (var msg in pending)
         {
@@ -74,13 +141,18 @@ public sealed class OutboxPublisherService(
                 }
 
                 msg.ProcessedAt = DateTime.UtcNow;
-                logger.LogInformation("Outbox message {Id} published.", msg.Id);
+                logger.LogInformation("Outbox message {Id} published successfully.", msg.Id);
             }
             catch (Exception ex)
             {
                 msg.RetryCount++;
-                logger.LogError(ex, "Failed to publish outbox message {Id} (attempt {Attempt}).",
-                    msg.Id, msg.RetryCount);
+                logger.LogError(ex, "Failed to publish outbox message {Id} (attempt {Attempt}/{MaxRetries}).",
+                    msg.Id, msg.RetryCount, MaxRetries);
+
+                if (msg.RetryCount >= MaxRetries)
+                {
+                    logger.LogError("Outbox message {Id} exceeded max retries. Moving to dead-letter state.", msg.Id);
+                }
             }
         }
 

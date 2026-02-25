@@ -2,7 +2,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SmartHealth.Appointments.Domain.Entities;
-using SmartHealth.Appointments.Infrastructure.Messaging;
+using SmartHealth.Appointments.Domain.Events;
 using SmartHealth.Appointments.Infrastructure.Persistence;
 
 namespace SmartHealth.Appointments.Infrastructure.Messaging;
@@ -16,16 +16,16 @@ namespace SmartHealth.Appointments.Infrastructure.Messaging;
 // ---------------------------------------------------------------------------
 
 /// <summary>
-/// Handles AppointmentRequestedMessage in choreography mode.
+/// Handles AppointmentRequestedEvent in choreography mode.
 /// Validates doctor availability and publishes the next event.
 /// </summary>
 public sealed class AppointmentRequestedConsumer(
     AppointmentsDbContext db,
     IPublishEndpoint publishEndpoint,
     ILogger<AppointmentRequestedConsumer> logger)
-    : IConsumer<AppointmentRequestedMessage>
+    : IConsumer<AppointmentRequestedEvent>
 {
-    public async Task Consume(ConsumeContext<AppointmentRequestedMessage> context)
+    public async Task Consume(ConsumeContext<AppointmentRequestedEvent> context)
     {
         var msg = context.Message;
         logger.LogInformation("Choreography: AppointmentRequested {Id}", msg.AppointmentId);
@@ -48,7 +48,7 @@ public sealed class AppointmentRequestedConsumer(
         }
 
         await publishEndpoint.Publish(
-            new DoctorAvailabilityValidatedMessage(msg.AppointmentId),
+            new DoctorAvailabilityValidatedMessage(msg.AppointmentId, msg.DoctorId),
             context.CancellationToken);
     }
 }
