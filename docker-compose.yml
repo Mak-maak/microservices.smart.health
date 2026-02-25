@@ -29,6 +29,34 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  prescriptions-api:
+    build:
+      context: ./src/prescriptions.api
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8000"
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/smarthealth_prescriptions"
+      REDIS_URL: "redis://redis:6379"
+      USE_IN_MEMORY_BUS: "true"
+      ENABLE_REDIS_CACHE: "false"
+      ENABLE_LLM_SUGGESTIONS: "false"
+      OPENAI_API_KEY: ""
+      SECRET_KEY: "dev-secret-key"
+      MODEL_STORAGE_PATH: "/app/models"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
   payments-api:
     build:
       context: ./src/payments.api
@@ -86,6 +114,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: smarthealth_payments
+      POSTGRES_MULTIPLE_DATABASES: "smarthealth_payments,smarthealth_prescriptions"
     ports:
       - "5432:5432"
     volumes:
