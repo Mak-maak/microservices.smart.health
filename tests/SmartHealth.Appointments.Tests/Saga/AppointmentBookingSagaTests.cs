@@ -40,13 +40,14 @@ public sealed class AppointmentBookingSagaTests : IAsyncLifetime
     public async Task Saga_WhenDoctorAvailable_ShouldTransitionToConfirming()
     {
         var appointmentId = Guid.NewGuid();
+        var doctorId = Guid.NewGuid();
         var startTime = DateTime.UtcNow.AddDays(1);
 
         // Publish the initial AppointmentRequested message
         await _harness.Bus.Publish(new AppointmentRequestedMessage(
             appointmentId,
             Guid.NewGuid(),
-            Guid.NewGuid(),
+            doctorId,
             startTime,
             startTime.AddHours(1)));
 
@@ -55,7 +56,7 @@ public sealed class AppointmentBookingSagaTests : IAsyncLifetime
             .Should().BeTrue();
 
         // Simulate doctor available response
-        await _harness.Bus.Publish(new DoctorAvailabilityValidatedMessage(appointmentId));
+        await _harness.Bus.Publish(new DoctorAvailabilityValidatedMessage(appointmentId, doctorId));
 
         // Saga should then publish ReserveSlotCommand
         (await _harness.Published.Any<ReserveSlotCommand>())
@@ -91,8 +92,8 @@ public sealed class AppointmentBookingSagaTests : IAsyncLifetime
         await _harness.Bus.Publish(new AppointmentRequestedMessage(
             appointmentId, patientId, doctorId, startTime, startTime.AddHours(1)));
 
-        await _harness.Bus.Publish(new DoctorAvailabilityValidatedMessage(appointmentId));
-        await _harness.Bus.Publish(new SlotReservedMessage(appointmentId));
+        await _harness.Bus.Publish(new DoctorAvailabilityValidatedMessage(appointmentId, doctorId));
+        await _harness.Bus.Publish(new SlotReservedMessage(appointmentId, doctorId));
         await _harness.Bus.Publish(new AppointmentConfirmedMessage(appointmentId));
 
         // Final integration event should be published

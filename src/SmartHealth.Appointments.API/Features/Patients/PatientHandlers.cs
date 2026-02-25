@@ -24,6 +24,9 @@ public sealed class CreatePatientValidator : AbstractValidator<CreatePatientComm
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256);
         RuleFor(x => x.PhoneNumber).MaximumLength(20);
+        RuleFor(x => x.DateOfBirth).NotEmpty()
+            .LessThan(DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("Date of birth must be in the past.");
     }
 }
 

@@ -34,6 +34,7 @@ public sealed class AppointmentBookingSaga : MassTransitStateMachine<Appointment
     public Event<SlotReservedMessage> SlotReserved { get; private set; } = null!;
     public Event<SlotReservationFailedMessage> SlotReservationFailed { get; private set; } = null!;
     public Event<AppointmentConfirmedMessage> AppointmentConfirmed { get; private set; } = null!;
+    public Event<AppointmentCompensatedMessage> AppointmentCompensated { get; private set; } = null!;
 
     public AppointmentBookingSaga()
     {
@@ -61,6 +62,9 @@ public sealed class AppointmentBookingSaga : MassTransitStateMachine<Appointment
             x.CorrelateById(ctx => ctx.Message.AppointmentId));
 
         Event(() => AppointmentConfirmed, x =>
+            x.CorrelateById(ctx => ctx.Message.AppointmentId));
+
+        Event(() => AppointmentCompensated, x =>
             x.CorrelateById(ctx => ctx.Message.AppointmentId));
     }
 
@@ -123,6 +127,12 @@ public sealed class AppointmentBookingSaga : MassTransitStateMachine<Appointment
 
         // Compensation: publish failure event and finalize
         During(Compensating,
+            When(AppointmentCompensated)
+                .Publish(ctx => new AppointmentCancelledIntegrationEvent(
+                    ctx.Saga.CorrelationId,
+                    ctx.Message.Reason))
+                .TransitionTo(Failed)
+                .Finalize(),
             Ignore(DoctorUnavailable),
             Ignore(SlotReservationFailed));
 

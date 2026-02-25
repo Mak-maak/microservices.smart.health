@@ -1,14 +1,10 @@
 using FluentValidation;
-using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SmartHealth.Appointments.Domain.Entities;
 using SmartHealth.Appointments.Domain.Exceptions;
 using SmartHealth.Appointments.Domain.ValueObjects;
-using SmartHealth.Appointments.Infrastructure.Messaging;
-using SmartHealth.Appointments.Infrastructure.Outbox;
 using SmartHealth.Appointments.Infrastructure.Persistence;
-using System.Text.Json;
 
 namespace SmartHealth.Appointments.Features.Appointments.BookAppointment;
 
@@ -78,21 +74,7 @@ public sealed class BookAppointmentHandler(AppointmentsDbContext db)
 
         db.Appointments.Add(appointment);
 
-        // Transactional Outbox: save integration message in same transaction
-        var integrationEvent = new AppointmentRequestedMessage(
-            appointment.Id,
-            request.PatientId,
-            request.DoctorId,
-            request.StartTime,
-            request.EndTime);
-
-        db.OutboxMessages.Add(new OutboxMessage
-        {
-            MessageType = typeof(AppointmentRequestedMessage).AssemblyQualifiedName!,
-            Payload = JsonSerializer.Serialize(integrationEvent),
-            CorrelationId = appointment.Id.ToString()
-        });
-
+        // Domain event is automatically converted to outbox message by SaveChangesAsync override
         await db.SaveChangesAsync(cancellationToken);
 
         return new BookAppointmentResult(appointment.Id);

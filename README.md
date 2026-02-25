@@ -188,7 +188,40 @@ Configuration is loaded from `appsettings.json` → `appsettings.{Environment}.j
 
 ## Infrastructure & Deployment
 
-### Bicep Infrastructure
+### 🚀 Deployment Stack Scripts (Recommended)
+
+**Modern approach using Azure Deployment Stacks for unified lifecycle management.**
+
+See **[infra/scripts/README.md](infra/scripts/README.md)** for complete documentation.
+
+**Quick Start - PowerShell:**
+```powershell
+# Deploy development environment
+.\infra\scripts\deploy-stack.ps1 `
+    -Environment dev `
+    -Location eastus `
+    -SqlAdminPassword (ConvertTo-SecureString "YourStr0ng!Passw0rd" -AsPlainText -Force)
+
+# Validate deployment
+.\infra\scripts\validate-stack.ps1 -Environment dev -DetailedOutput
+
+# Clean up
+.\infra\scripts\destroy-stack.ps1 -Environment dev -DeleteResourceGroup
+```
+
+**Quick Start - Bash:**
+```bash
+# Deploy development environment
+./infra/scripts/deploy-stack.sh \
+    --environment dev \
+    --location eastus \
+    --password "YourStr0ng!Passw0rd"
+
+# Validate deployment
+az stack group show --name smarthealth-dev-stack --resource-group smarthealth-dev-rg
+```
+
+### Traditional Bicep Deployment (Alternative)
 
 **Prerequisites:** Azure CLI + Bicep CLI installed, and an active Azure subscription.
 
