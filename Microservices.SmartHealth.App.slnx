@@ -24,8 +24,10 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/SmartHealth.Appointments.API/SmartHealth.Appointments.API.csproj" />
+    <Project Path="src/SmartHealth.Payments.API/SmartHealth.Payments.API.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SmartHealth.Appointments.Tests/SmartHealth.Appointments.Tests.csproj" />
+    <Project Path="tests/SmartHealth.Payments.Tests/SmartHealth.Payments.Tests.csproj" />
   </Folder>
 </Solution>
