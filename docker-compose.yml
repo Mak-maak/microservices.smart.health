@@ -29,6 +29,28 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  payments-api:
+    build:
+      context: ./src/SmartHealth.Payments.API
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__SqlServer: "Server=sqlserver,1433;Database=SmartHealthPayments;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true"
+      Features__UseInMemoryBus: "true"
+      Stripe__SecretKey: "sk_test_placeholder"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
