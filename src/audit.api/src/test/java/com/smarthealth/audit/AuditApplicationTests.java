@@ -1,7 +1,9 @@
 package com.smarthealth.audit;
 
+import com.azure.messaging.servicebus.ServiceBusProcessorClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -15,6 +17,12 @@ import org.springframework.test.context.TestPropertySource;
     "spring.flyway.enabled=false"
 })
 class AuditApplicationTests {
+
+    @MockBean(name = "appointmentsProcessorClient")
+    private ServiceBusProcessorClient appointmentsProcessorClient;
+
+    @MockBean(name = "paymentsProcessorClient")
+    private ServiceBusProcessorClient paymentsProcessorClient;
 
     @Test
     void contextLoads() {
