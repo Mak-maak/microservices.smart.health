@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class DomainEventConsumer implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DomainEventConsumer.name);
-  private readonly receivers: ServiceBusReceiver[] = [];
+  private readonly receiverMap = new Map<string, ServiceBusReceiver>();
 
   private readonly SUPPORTED_TOPICS = [
     'appointmentCreated',
@@ -44,7 +44,7 @@ export class DomainEventConsumer implements OnModuleInit, OnModuleDestroy {
           processMessage: (msg) => this.handleMessage(msg, topicKey),
           processError: this.handleError.bind(this),
         });
-        this.receivers.push(receiver);
+        this.receiverMap.set(topicKey, receiver);
         this.logger.log(`Subscribed to ${topicName}/${subscriptionName}`);
       } catch (error) {
         this.logger.error(`Failed to subscribe to ${topicName}: ${error.message}`);
@@ -53,7 +53,7 @@ export class DomainEventConsumer implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    for (const receiver of this.receivers) {
+    for (const [, receiver] of this.receiverMap) {
       try {
         await receiver.close();
       } catch (error) {
@@ -72,6 +72,8 @@ export class DomainEventConsumer implements OnModuleInit, OnModuleDestroy {
       this.topicKeyToEventType(topicKey);
 
     this.logger.log(`Received ${eventType} message: ${messageId}`);
+
+    const receiver = this.receiverMap.get(topicKey);
 
     try {
       const command = new RecordEventCommand(
@@ -95,9 +97,6 @@ export class DomainEventConsumer implements OnModuleInit, OnModuleDestroy {
 
       await this.commandBus.execute(command);
 
-      const receiver = this.receivers.find((r) => r.entityPath?.includes(
-        this.configService.get<string>(`serviceBus.topics.${topicKey}`) || '',
-      ));
       if (receiver) {
         await receiver.completeMessage(message);
       }
@@ -105,6 +104,14 @@ export class DomainEventConsumer implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Domain event processed: ${eventType} (${messageId})`);
     } catch (error) {
       this.logger.error(`Failed to process ${eventType}: ${error.message}`);
+      // Abandon so Service Bus can retry or dead-letter after max delivery count
+      if (receiver) {
+        try {
+          await receiver.abandonMessage(message);
+        } catch (abandonError) {
+          this.logger.error(`Failed to abandon message ${messageId}: ${abandonError.message}`);
+        }
+      }
     }
   }
 

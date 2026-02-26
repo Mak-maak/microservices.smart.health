@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Logger } from '@nestjs/common';
+import { Controller, Get, Param, Query, Logger, BadRequestException } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { GetEventsByAggregateQuery } from './get-events-by-aggregate.query';
 import { GetEventsByCorrelationQuery } from './get-events-by-correlation.query';
@@ -31,6 +31,12 @@ export class GetEventsController {
     @Query('from') from: string,
     @Query('to') to: string,
   ) {
+    if (!from || !to) {
+      throw new BadRequestException('Query parameters "from" and "to" are required (ISO 8601)');
+    }
+    if (isNaN(Date.parse(from)) || isNaN(Date.parse(to))) {
+      throw new BadRequestException('"from" and "to" must be valid ISO 8601 date strings');
+    }
     return this.queryBus.execute(new GetEventsByDateRangeQuery(from, to));
   }
 }

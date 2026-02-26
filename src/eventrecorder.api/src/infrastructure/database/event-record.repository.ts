@@ -32,7 +32,7 @@ export class EventRecordRepository {
     }
 
     const query = {
-      query: 'SELECT * FROM c WHERE c.eventId = @eventId',
+      query: 'SELECT c.id, c.eventId FROM c WHERE c.eventId = @eventId',
       parameters: [{ name: '@eventId', value: eventId }],
     };
 
