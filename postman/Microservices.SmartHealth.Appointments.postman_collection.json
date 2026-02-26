@@ -1,0 +1,594 @@
+{
+  "info": {
+    "_postman_id": "a914c1df-ddd7-4a4f-8737-ed1947faa58d",
+    "name": "Microservices.SmartHealth.Appointments",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52657991",
+    "_collection_link": "https://go.postman.co/collection/52657991-a914c1df-ddd7-4a4f-8737-ed1947faa58d?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Liveness",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/liveness",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "liveness"
+              ]
+            },
+            "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+          },
+          "response": []
+        },
+        {
+          "name": "Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/readiness",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "readiness"
+              ]
+            },
+            "description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Patient",
+      "item": [
+        {
+          "name": "Get Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Successful POST request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/{{patientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "{{patientId}}"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Successful POST request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response body contains patientId\", function () {  ",
+                  "    var patientId = pm.response.json().id;  ",
+                  "    pm.expect(patientId).to.not.be.undefined;",
+                  "    pm.environment.set(\"patientId\", patientId);",
+                  " });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// --- Helper Functions ---",
+                  "",
+                  "// Generate random alphabetic string",
+                  "function randomAlpha(length) {",
+                  "    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+                  "    let result = '';",
+                  "    for (let i = 0; i < length; i++) {",
+                  "        result += chars.charAt(Math.floor(Math.random() * chars.length));",
+                  "    }",
+                  "    return result;",
+                  "}",
+                  "",
+                  "// Generate random numeric string (for phone numbers)",
+                  "function randomNumeric(length) {",
+                  "    const chars = '0123456789';",
+                  "    let result = '';",
+                  "    for (let i = 0; i < length; i++) {",
+                  "        result += chars.charAt(Math.floor(Math.random() * chars.length));",
+                  "    }",
+                  "    return result;",
+                  "}",
+                  "",
+                  "// Generate random date (YYYY-MM-DD)",
+                  "function randomDOB(startYear, endYear) {",
+                  "    const year = Math.floor(Math.random() * (endYear - startYear + 1)) + startYear;",
+                  "    const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');",
+                  "    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0'); // Safety at 28 days",
+                  "    return `${year}-${month}-${day}`;",
+                  "}",
+                  "",
+                  "// Capitalize first letter",
+                  "function capitalize(str) {",
+                  "    return str.charAt(0).toUpperCase() + str.slice(1);",
+                  "}",
+                  "",
+                  "// --- Data Generation ---",
+                  "",
+                  "const firstName = capitalize(randomAlpha(7));",
+                  "const lastName = capitalize(randomAlpha(8));",
+                  "const email = randomAlpha(6) + '.' + randomAlpha(5) + '@example.com';",
+                  "const phoneNumber = '555' + randomNumeric(7); // Prepended with 555 for a standard format",
+                  "const dob = randomDOB(1960, 2005); // Generates a DOB between 1960 and 2005",
+                  "",
+                  "// --- Set Environment Variables ---",
+                  "",
+                  "pm.environment.set('patientFirstName', firstName);",
+                  "pm.environment.set('patientLastName', lastName);",
+                  "pm.environment.set('patientEmail', email);",
+                  "pm.environment.set('patientPhoneNumber', phoneNumber);",
+                  "pm.environment.set('patientDateOfBirth', dob);",
+                  "",
+                  "console.log(`Generated Patient: ${firstName} ${lastName} | Email: ${email} | Phone: ${phoneNumber} | DOB: ${dob}`);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"firstName\": \"{{patientFirstName}}\",\n    \"lastName\": \"{{patientLastName}}\",\n    \"email\": \"{{patientEmail}}\",\n    \"phoneNumber\": \"{{patientPhoneNumber}}\",\n    \"dateOfBirth\": \"{{patientDateOfBirth}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/patients/Create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "Create"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Doctor",
+      "item": [
+        {
+          "name": "Get Doctor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Successful POST request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/doctors/{{doctorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "doctors",
+                "{{doctorId}}"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Doctor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Successful POST request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response body contains doctorId\", function () {  ",
+                  "    var doctorId = pm.response.json().id;  ",
+                  "    pm.expect(doctorId).to.not.be.undefined;",
+                  "    pm.environment.set(\"doctorId\", doctorId);",
+                  " });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate random alphabetic string helper",
+                  "function randomAlpha(length) {",
+                  "    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+                  "    let result = '';",
+                  "    for (let i = 0; i < length; i++) {",
+                  "        result += chars.charAt(Math.floor(Math.random() * chars.length));",
+                  "    }",
+                  "    return result;",
+                  "}",
+                  "",
+                  "// Capitalize first letter",
+                  "function capitalize(str) {",
+                  "    return str.charAt(0).toUpperCase() + str.slice(1);",
+                  "}",
+                  "",
+                  "// Pick a random medical specialization",
+                  "function randomSpecialization() {",
+                  "    const specializations = ['Cardiology', 'Neurology', 'Orthopedics', 'Dermatology', 'Pediatrics', 'Oncology', 'Radiology', 'Psychiatry', 'Gastroenterology', 'Endocrinology'];",
+                  "    return specializations[Math.floor(Math.random() * specializations.length)];",
+                  "}",
+                  "",
+                  "// Generate random license number (MD-XXXX format)",
+                  "function randomLicense() {",
+                  "    let num = '';",
+                  "    for (let i = 0; i < 4; i++) {",
+                  "        num += Math.floor(Math.random() * 10);",
+                  "    }",
+                  "    return 'MD-' + num;",
+                  "}",
+                  "",
+                  "const firstName = capitalize(randomAlpha(7));",
+                  "const lastName = capitalize(randomAlpha(8));",
+                  "const email = randomAlpha(6) + '.' + randomAlpha(5) + '@example.com';",
+                  "const specialization = randomSpecialization();",
+                  "const licenseNumber = randomLicense();",
+                  "",
+                  "pm.environment.set('doctorFirstName', firstName);",
+                  "pm.environment.set('doctorLastName', lastName);",
+                  "pm.environment.set('doctorEmail', email);",
+                  "pm.environment.set('doctorSpecialization', specialization);",
+                  "pm.environment.set('doctorLicenseNumber', licenseNumber);",
+                  "",
+                  "console.log('Generated Doctor - First Name:', firstName, '| Last Name:', lastName, '| Email:', email, '| Specialization:', specialization, '| License:', licenseNumber);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"firstName\": \"{{doctorFirstName}}\",\n    \"lastName\": \"{{doctorLastName}}\",\n    \"email\": \"{{doctorEmail}}\",\n    \"specialization\": \"{{doctorSpecialization}}\",\n    \"licenseNumber\": \"{{doctorLicenseNumber}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/doctors/Create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "doctors",
+                "Create"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Appointment",
+      "item": [
+        {
+          "name": "Book Appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Successful POST request\", function () {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response body contains appointmentId\", function () {  \r",
+                  "    var appointmentId = pm.response.json().appointmentId;  \r",
+                  "    pm.expect(appointmentId).to.not.be.undefined;\r",
+                  "    pm.environment.set(\"appointmentId\", appointmentId);\r",
+                  " });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate appointment start time (random future date within next 30 days)",
+                  "function randomFutureDate() {",
+                  "    const now = new Date();",
+                  "    const daysAhead = Math.floor(Math.random() * 30) + 1;",
+                  "    const hours = [9, 10, 11, 13, 14, 15, 16];",
+                  "    const randomHour = hours[Math.floor(Math.random() * hours.length)];",
+                  "    now.setDate(now.getDate() + daysAhead);",
+                  "    now.setHours(randomHour, 0, 0, 0);",
+                  "    return now.toISOString().split('.')[0] + 'Z';",
+                  "}",
+                  "",
+                  "// Generate end time 30 minutes after start",
+                  "function addMinutes(isoString, minutes) {",
+                  "    const date = new Date(isoString);",
+                  "    date.setMinutes(date.getMinutes() + minutes);",
+                  "    return date.toISOString().split('.')[0] + 'Z';",
+                  "}",
+                  "",
+                  "// Random appointment reasons",
+                  "function randomReason() {",
+                  "    const reasons = [",
+                  "        'Annual checkup and blood pressure monitoring',",
+                  "        'Follow-up consultation after treatment',",
+                  "        'Routine health screening',",
+                  "        'Specialist referral consultation',",
+                  "        'Chronic condition management review',",
+                  "        'Post-surgery follow-up',",
+                  "        'Vaccination and immunization',",
+                  "        'Lab results discussion'",
+                  "    ];",
+                  "    return reasons[Math.floor(Math.random() * reasons.length)];",
+                  "}",
+                  "",
+                  "const startTime = randomFutureDate();",
+                  "const endTime = addMinutes(startTime, 30);",
+                  "const reason = randomReason();",
+                  "",
+                  "pm.environment.set('appointmentStartTime', startTime);",
+                  "pm.environment.set('appointmentEndTime', endTime);",
+                  "pm.environment.set('appointmentReason', reason);",
+                  "",
+                  "console.log('Generated Appointment - Start:', startTime, '| End:', endTime, '| Reason:', reason);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"patientId\": \"{{patientId}}\",\n    \"doctorId\": \"{{doctorId}}\",\n    \"startTime\": \"{{appointmentStartTime}}\",\n    \"endTime\": \"{{appointmentEndTime}}\",\n    \"reason\": \"{{appointmentReason}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/Book",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "Book"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "{{appointmentId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Appointment",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Random cancellation reasons",
+                  "function randomCancellationReason() {",
+                  "    const reasons = [",
+                  "        'Unable to join the session.',",
+                  "        'Schedule conflict with another appointment.',",
+                  "        'Patient feeling better, no longer needs consultation.',",
+                  "        'Doctor unavailable at the scheduled time.',",
+                  "        'Emergency situation came up.',",
+                  "        'Need to reschedule for a later date.',",
+                  "        'Transportation issues.',",
+                  "        'Personal reasons.'",
+                  "    ];",
+                  "    return reasons[Math.floor(Math.random() * reasons.length)];",
+                  "}",
+                  "",
+                  "const cancellationReason = randomCancellationReason();",
+                  "pm.environment.set('cancellationReason', cancellationReason);",
+                  "",
+                  "console.log('Generated Cancellation Reason:', cancellationReason);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}?reason={{cancellationReason}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "{{appointmentId}}"
+              ],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "{{cancellationReason}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
