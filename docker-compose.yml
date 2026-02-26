@@ -131,13 +131,37 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  shipment-api:
+    build:
+      context: ./src/shipment.api
+      dockerfile: Dockerfile
+    ports:
+      - "8083:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/smarthealth_shipment?schema=public"
+      REDIS_URL: "redis://redis:6379"
+      USE_IN_MEMORY_BUS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
   postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: smarthealth_payments
-      POSTGRES_MULTIPLE_DATABASES: "smarthealth_payments,smarthealth_prescriptions"
+      POSTGRES_MULTIPLE_DATABASES: "smarthealth_payments,smarthealth_prescriptions,smarthealth_shipment,smarthealth_audit"
     ports:
       - "5432:5432"
     volumes:
