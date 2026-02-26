@@ -65,6 +65,13 @@ export class DomainEventConsumer implements OnModuleInit, OnModuleDestroy {
   private async handleMessage(message: ServiceBusReceivedMessage, topicKey: string): Promise<void> {
     const messageId = (message.messageId as string) || uuidv4();
     const correlationId = (message.correlationId as string) || uuidv4();
+
+    if (!message.messageId) {
+      this.logger.warn(`Message missing messageId on topic ${topicKey} - generated fallback: ${messageId}`);
+    }
+    if (!message.correlationId) {
+      this.logger.warn(`Message missing correlationId on topic ${topicKey} - generated fallback: ${correlationId}`);
+    }
     const body = message.body || {};
 
     const eventType = (message.subject as string) ||

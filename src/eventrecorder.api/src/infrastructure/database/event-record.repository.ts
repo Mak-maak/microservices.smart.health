@@ -14,15 +14,30 @@ export class EventRecordRepository {
       throw new Error('Cosmos DB not available');
     }
 
-    const existing = await this.findByEventId(document.eventId);
-    if (existing) {
+    const alreadyExists = await this.existsByEventId(document.eventId);
+    if (alreadyExists) {
       this.logger.log(`Event ${document.eventId} already recorded - skipping (idempotent)`);
-      return existing;
+      return document;
     }
 
     const { resource } = await container.items.create(document);
     this.logger.log(`Event recorded: ${document.eventId} (${document.eventType})`);
     return resource as EventRecordDocument;
+  }
+
+  private async existsByEventId(eventId: string): Promise<boolean> {
+    const container = this.cosmosService.getContainer();
+    if (!container) {
+      return false;
+    }
+
+    const query = {
+      query: 'SELECT c.id FROM c WHERE c.eventId = @eventId',
+      parameters: [{ name: '@eventId', value: eventId }],
+    };
+
+    const { resources } = await container.items.query<{ id: string }>(query).fetchAll();
+    return resources.length > 0;
   }
 
   async findByEventId(eventId: string): Promise<EventRecordDocument | null> {
@@ -32,7 +47,7 @@ export class EventRecordRepository {
     }
 
     const query = {
-      query: 'SELECT c.id, c.eventId FROM c WHERE c.eventId = @eventId',
+      query: 'SELECT * FROM c WHERE c.eventId = @eventId',
       parameters: [{ name: '@eventId', value: eventId }],
     };
 
